@@ -3,6 +3,7 @@ using Entities.RequestFeatures;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.ActionFilters;
+using Services;
 using Services.Contracts;
 using System.Text.Json;
 
@@ -21,13 +22,23 @@ namespace Presentation.Controllers
         }
 
         [HttpHead]
-        [HttpGet]
-        public async Task<IActionResult> GetAllbooksAsync([FromQuery] BookParameters bookParameters)
+        [HttpGet(Name = "GetAllBooksAsync")]
+        [ServiceFilter(typeof(ValidateMediaTypeAttribute))]
+        public async Task<IActionResult> GetAllBooksAsync([FromQuery] BookParameters bookParameters)
         {
-            var pagedResult = await _manager.BookService.GetAllBooksAsync(bookParameters, false);
+            var linkParameters = new LinkParameters()
+            {
+                BookParameters = bookParameters,
+                HtppContext = HttpContext
+            };
 
-            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(pagedResult.metaData));
-            return Ok(pagedResult.books); //200
+            var result = await _manager.BookService.GetAllBooksAsync(linkParameters, false);
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(result.metaData));
+
+            return result.linkResponse.HasLinks ?
+                 Ok(result.linkResponse.LinkedEntities) :
+                 Ok(result.linkResponse.ShapedEntities);
         }
 
         [HttpGet("{id:int}")]
@@ -38,7 +49,7 @@ namespace Presentation.Controllers
         }
 
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        [HttpPost]
+        [HttpPost(Name = "CreateOneBookAsync")]
         public async Task<IActionResult> CreateOneBookAsync([FromBody] BookDtoForInsertion bookDto)
         {
             var book = await _manager.BookService.CreateOneBookAsync(bookDto);

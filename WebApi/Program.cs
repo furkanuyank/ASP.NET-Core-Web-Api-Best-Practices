@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using NLog;
 using Presentation.ActionFilters;
+using Services;
 using Services.Contracts;
 using WebApi.Extensions;
 
@@ -14,7 +15,7 @@ builder.Services.AddControllers(config =>
     config.ReturnHttpNotAcceptable = true;
 })
     .AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly)
-    .AddNewtonsoftJson()
+    //.AddNewtonsoftJson()
     .AddXmlDataContractSerializerFormatters()
     .AddCustomCsvFormat();
 
@@ -22,7 +23,7 @@ builder.Services.AddControllers(config =>
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;
-});  
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -36,11 +37,13 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.ConfigureActionFilters();
 builder.Services.ConfigureCors();
 builder.Services.ConfigureDataShaper();
+builder.Services.AddCustomMediaTypes();
+builder.Services.AddScoped<IBookLinks, BookLinks>();
 
 var app = builder.Build();
 
 //Middlewares
-var logger=app.Services.GetRequiredService<ILoggerService>();
+var logger = app.Services.GetRequiredService<ILoggerService>();
 app.ConfigureExceptionHAndler(logger);
 
 
