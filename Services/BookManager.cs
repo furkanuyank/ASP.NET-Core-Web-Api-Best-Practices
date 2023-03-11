@@ -88,5 +88,11 @@ namespace Services
             _manager.Book.Update(entity);
             await _manager.SaveAsync();
         }
+
+        public async Task<List<Book>> GetAllBooksAsync(bool trackChanges)
+        {
+            var books = await _manager.Book.GetAllBooksAsync(trackChanges);
+            return books;
+        }
     }
 }

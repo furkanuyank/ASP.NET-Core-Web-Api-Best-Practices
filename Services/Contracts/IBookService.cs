@@ -20,6 +20,6 @@ namespace Services.Contracts
         Task DeleteOneBookAsync(int id, bool trackChanges);
         Task<(BookDtoForUpdate bookDtoForUpdate, Book book)> GetOneBookForPatchAsync(int id, bool trackCahnges);
         Task SaveChangesForPatchAsync(BookDtoForUpdate bookDtoForUpdate, Book book);
-
+        Task<List<Book>> GetAllBooksAsync(bool trackChanges);
     }
 }
