@@ -1,6 +1,6 @@
+using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Mvc;
 using NLog;
-using Presentation.ActionFilters;
 using Services;
 using Services.Contracts;
 using WebApi.Extensions;
@@ -13,6 +13,7 @@ builder.Services.AddControllers(config =>
 {
     config.RespectBrowserAcceptHeader = true;
     config.ReturnHttpNotAcceptable = true;
+    config.CacheProfiles.Add("5mins", new CacheProfile() { Duration = 300 });
 })
     .AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly)
     //.AddNewtonsoftJson()
@@ -40,6 +41,11 @@ builder.Services.ConfigureDataShaper();
 builder.Services.AddCustomMediaTypes();
 builder.Services.AddScoped<IBookLinks, BookLinks>();
 builder.Services.ConfigureVersioning();
+builder.Services.ConfigureResponseCaching();
+builder.Services.ConfigureHttpCacheHeaders();
+builder.Services.AddMemoryCache();
+builder.Services.ConfigureRateLimitingOptions();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -60,7 +66,10 @@ if (app.Environment.IsProduction())
 
 app.UseHttpsRedirection();
 
+app.UseIpRateLimiting(); //IpRateLimiting should be call before Cors
 app.UseCors("CorsPolicy");
+app.UseResponseCaching(); // ResponseCaching should be call after Cors
+app.UseHttpCacheHeaders();
 
 app.UseAuthorization();
 
